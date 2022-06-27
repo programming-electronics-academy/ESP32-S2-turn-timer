@@ -8,7 +8,7 @@
    DONE
      -Test RE code
      -Test FAST LED code
-     
+
      -Import exisiting Turn Timer code
       -Change Pin Numbers
 
@@ -18,7 +18,7 @@
 #include <FastLED.h>
 
 //pins
-const byte BUTTON_PIN = 21; //Delete when moved to RE input 
+const byte BUTTON_PIN = 21; //Delete when moved to RE input
 const byte DATA_PIN = 11; // neo-pixel data pin
 const unsigned int ROTARY_ENC_PIN_A = 33;
 const unsigned int ROTARY_ENC_PIN_B = 34;
@@ -78,7 +78,7 @@ void ICACHE_RAM_ATTR readEncoderStatus() {
   byte A_Output = digitalRead(ROTARY_ENC_PIN_A);
   byte B_Output = digitalRead(ROTARY_ENC_PIN_B);
   byte currState = (A_Output * 2) + B_Output;
-  
+
   if (currState != lastState) {
 
     if (currState == aState[position + 1]) {
@@ -164,39 +164,43 @@ void signalTimeSelected(CHSV color) {
  ***********************************************************/
 int selectTime(CHSV uncountedColor, CHSV countedColor) {
 
-  int timeCounter = 0;                       // This tracks the button presses, each button press is a time unit
+  int tempCount = 0;                       // This tracks the button presses, each button press is a time unit
   unsigned long previousButtonHoldTime = 0;  // Used for determining long button hold time
   boolean update = true;
 
   while (true) {
 
+    // Get current position from rotary encoder
+    if (encoderStatus != NO_CHANGE) {
+
+      noInterrupts();
+      tempCount = count;
+      interrupts();
+
+      Serial.print(encoderStatus == TURN_CW ? "CW   " : "CCW  ");
+      Serial.println(tempCount);  // Use the saved variable
+
+      encoderStatus = NO_CHANGE;
+
+      //Make sure temp counter stays w/in bounds of num leds
+      if (tempCount >= NUM_LEDS) {
+        tempCount = NUM_LEDS;
+      }
+
+      // Set flag to update LEDs
+      update = true;
+    }
+
     if (update) {
       // Set color of each LED based on counted or uncounted
       for (int i = 0; i < NUM_LEDS; i++) {
-        leds[i] = i < timeCounter
+        leds[i] = i < tempCount
                   ? countedColor
                   : uncountedColor;
       }
 
       FastLED.show();
       update = false;
-    }
-
-    // Increment count when button pressed
-    if (buttonPressed) {
-
-      // Debounce button press
-      delay(50);
-      if (digitalRead(ROTARY_ENC_SWITCH)) {
-        buttonPressed = false;  // Reset ISR button flag
-        timeCounter++;
-        update = true;
-
-        //Rollover timeCounter if max reached
-        if (timeCounter >= NUM_LEDS) {
-          timeCounter = 0;
-        }
-      }
     }
 
     // Check if button held
@@ -207,6 +211,7 @@ int selectTime(CHSV uncountedColor, CHSV countedColor) {
 
         signalTimeSelected(countedColor);  //Display cylon effect to show selection has been made
         buttonPressed = false;             // reset ISR button flag
+        count = 0;                         // Reset count 
         break;
       }
 
@@ -215,7 +220,7 @@ int selectTime(CHSV uncountedColor, CHSV countedColor) {
     }
   }
 
-  return timeCounter;  //Returns the number of times the button was pressed (less the long hold)
+  return tempCount;  //Returns the number of times the button was pressed (less the long hold)
 }
 
 
@@ -237,7 +242,12 @@ void setup() {
   FastLED.setBrightness(84);
 
   pinMode(ROTARY_ENC_SWITCH, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonPress, RISING);
+
+  //attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonPress, RISING);
+
+  attachInterrupt(digitalPinToInterrupt(ROTARY_ENC_PIN_A), readEncoderStatus, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ROTARY_ENC_PIN_B), readEncoderStatus, CHANGE);
+
 
   // Set turn time.  Select seconds, then minutes.
   long secondsCount = selectTime(UNCOUNTED_COLOR, SECONDS_COUNTED_COLOR);
