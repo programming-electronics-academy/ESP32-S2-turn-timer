@@ -1,26 +1,25 @@
 /**
- * TODO
- * 
- *  -Test RE code
- *  -Test FAST LED code
- *  
- *  -Import exisiting Turn Timer code
- *    -Change Pin Numbers
- *   
-*   -Change selection of time from button to Rotary Encoder
- *    - Import RE code
- *      - adjust ISR for ESP32 -> ICACHE_RAM_ATTR
- *    
- * DONE    
- * 
- */
+   TODO
+
+    -Change selection of time from button to Rotary Encoder
+      - Import RE code
+        - adjust ISR for ESP32 -> ICACHE_RAM_ATTR
+
+   DONE
+     -Test RE code
+     -Test FAST LED code
+     
+     -Import exisiting Turn Timer code
+      -Change Pin Numbers
+
+*/
 
 
 #include <FastLED.h>
 
 //pins
-const byte BUTTON_PIN = 15;
-const byte DATA_PIN = 2;
+const byte BUTTON_PIN = 21;
+const byte DATA_PIN = 11;
 
 // LED array
 const byte NUM_LEDS = 12;
@@ -122,8 +121,8 @@ int selectTime(CHSV uncountedColor, CHSV countedColor) {
       // Set color of each LED based on counted or uncounted
       for (int i = 0; i < NUM_LEDS; i++) {
         leds[i] = i < timeCounter
-                    ? countedColor
-                    : uncountedColor;
+                  ? countedColor
+                  : uncountedColor;
       }
 
       FastLED.show();
@@ -174,7 +173,7 @@ long computeTurnTime(long s = 0, long m = 0) {
 
   s = s * 5 * 1000;  // 5 seconds for every count
   m = m * 60 * 1000;  // 1 minute for every count
-  
+
   return s + m;  // in milliseconds
 }
 
@@ -228,4 +227,3 @@ void loop() {
     }
   }
 }  // End loop()
- 

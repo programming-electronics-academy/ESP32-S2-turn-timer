@@ -62,10 +62,8 @@ void ICACHE_RAM_ATTR readEncoderStatus() {
 void setup() {
   Serial.begin(9600);
   
-//  attachInterrupt(digitalPinToInterrupt(ROTARY_ENC_PIN_A), readEncoderStatus, CHANGE);
-//  attachInterrupt(digitalPinToInterrupt(ROTARY_ENC_PIN_B), readEncoderStatus, CHANGE);
-  attachInterrupt(ROTARY_ENC_PIN_A, readEncoderStatus, CHANGE);
-  attachInterrupt(ROTARY_ENC_PIN_B, readEncoderStatus, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ROTARY_ENC_PIN_A), readEncoderStatus, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ROTARY_ENC_PIN_B), readEncoderStatus, CHANGE);
   
   pinMode(ROTARY_ENC_SWITCH, INPUT_PULLUP);
 }
