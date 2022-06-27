@@ -18,8 +18,24 @@
 #include <FastLED.h>
 
 //pins
-const byte BUTTON_PIN = 21;
-const byte DATA_PIN = 11;
+const byte BUTTON_PIN = 21; //Delete when moved to RE input 
+const byte DATA_PIN = 11; // neo-pixel data pin
+const unsigned int ROTARY_ENC_PIN_A = 33;
+const unsigned int ROTARY_ENC_PIN_B = 34;
+const unsigned int ROTARY_ENC_SWITCH = 21;
+
+//Rotary Encoder States
+#define NO_CHANGE 0
+#define TURN_CW   1
+#define TURN_CCW  2
+
+//Direction     ┌─  ccw  ─┐  N  ┌─  cw  ─┐
+//position       0  1  2  3  4  5  6  7  8
+byte aState[] = {3, 2, 0, 1, 3, 2, 0, 1, 3};
+byte lastState = 3;
+volatile int count = 0;
+unsigned int position = 4;
+volatile byte encoderStatus = NO_CHANGE;
 
 // LED array
 const byte NUM_LEDS = 12;
@@ -44,11 +60,48 @@ long turnTime = 0;                                       // Manages the turnTime
 volatile boolean buttonPressed = false;
 
 
+
+
 /************************************************************
    ISR: Actions to take on button press
+
+   DELETE when input goes to RE
  ***********************************************************/
 void buttonPress() {
   buttonPressed = true;  //flag that button was pressed
+}
+
+/************************************************************
+   ISR: Get rotary encoder position
+ ***********************************************************/
+void ICACHE_RAM_ATTR readEncoderStatus() {
+  byte A_Output = digitalRead(ROTARY_ENC_PIN_A);
+  byte B_Output = digitalRead(ROTARY_ENC_PIN_B);
+  byte currState = (A_Output * 2) + B_Output;
+  
+  if (currState != lastState) {
+
+    if (currState == aState[position + 1]) {
+      position++;
+      //Serial.println(position);
+      if (position == 8) {
+        count++;
+        position = 4;
+        encoderStatus = TURN_CW;
+      }
+    }
+    else if (currState == aState[position - 1]) {
+      position--;
+      //Serial.println(position);
+      if (position == 0) {
+        count--;
+        position = 4;
+        encoderStatus = TURN_CCW;
+      }
+    }
+
+    lastState = currState;
+  }
 }
 
 /************************************************************
@@ -134,7 +187,7 @@ int selectTime(CHSV uncountedColor, CHSV countedColor) {
 
       // Debounce button press
       delay(50);
-      if (digitalRead(BUTTON_PIN)) {
+      if (digitalRead(ROTARY_ENC_SWITCH)) {
         buttonPressed = false;  // Reset ISR button flag
         timeCounter++;
         update = true;
@@ -147,7 +200,7 @@ int selectTime(CHSV uncountedColor, CHSV countedColor) {
     }
 
     // Check if button held
-    if (!digitalRead(BUTTON_PIN)) {
+    if (!digitalRead(ROTARY_ENC_SWITCH)) {
 
       // Exit while if button has been held "long" time
       if (millis() - previousButtonHoldTime > HOLD_TO_FINISH_INTERVAL) {
@@ -183,7 +236,7 @@ void setup() {
   FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
   FastLED.setBrightness(84);
 
-  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  pinMode(ROTARY_ENC_SWITCH, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonPress, RISING);
 
   // Set turn time.  Select seconds, then minutes.
