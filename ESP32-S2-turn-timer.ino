@@ -18,7 +18,7 @@
 #include <FastLED.h>
 
 //pins
-const byte BUTTON_PIN = 21; //Delete when moved to RE input
+//const byte BUTTON_PIN = 21; //Delete when moved to RE input
 const byte DATA_PIN = 11; // neo-pixel data pin
 const unsigned int ROTARY_ENC_PIN_A = 33;
 const unsigned int ROTARY_ENC_PIN_B = 34;
@@ -173,21 +173,19 @@ int selectTime(CHSV uncountedColor, CHSV countedColor) {
     // Get current position from rotary encoder
     if (encoderStatus != NO_CHANGE) {
 
+      //Constrain count from 0-NUM_LEDs
+      //Note: -> //constrain(count, 0, NUM_LEDS); is not working...
+      if (count > NUM_LEDS) {
+        count = NUM_LEDS;
+      } else if (count < 0) {
+        count = 0;
+      }
+
       noInterrupts();
       tempCount = count;
       interrupts();
 
-      Serial.print(encoderStatus == TURN_CW ? "CW   " : "CCW  ");
-      Serial.println(tempCount);  // Use the saved variable
-
       encoderStatus = NO_CHANGE;
-
-      //Make sure temp counter stays w/in bounds of num leds
-      if (tempCount >= NUM_LEDS) {
-        tempCount = NUM_LEDS;
-      }
-
-      // Set flag to update LEDs
       update = true;
     }
 
@@ -203,6 +201,7 @@ int selectTime(CHSV uncountedColor, CHSV countedColor) {
       update = false;
     }
 
+
     // Check if button held
     if (!digitalRead(ROTARY_ENC_SWITCH)) {
 
@@ -211,7 +210,7 @@ int selectTime(CHSV uncountedColor, CHSV countedColor) {
 
         signalTimeSelected(countedColor);  //Display cylon effect to show selection has been made
         buttonPressed = false;             // reset ISR button flag
-        count = 0;                         // Reset count 
+        count = 0;                         // Reset count
         break;
       }
 
@@ -243,11 +242,9 @@ void setup() {
 
   pinMode(ROTARY_ENC_SWITCH, INPUT_PULLUP);
 
-  //attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonPress, RISING);
-
+  attachInterrupt(digitalPinToInterrupt(ROTARY_ENC_SWITCH), buttonPress, RISING);
   attachInterrupt(digitalPinToInterrupt(ROTARY_ENC_PIN_A), readEncoderStatus, CHANGE);
   attachInterrupt(digitalPinToInterrupt(ROTARY_ENC_PIN_B), readEncoderStatus, CHANGE);
-
 
   // Set turn time.  Select seconds, then minutes.
   long secondsCount = selectTime(UNCOUNTED_COLOR, SECONDS_COUNTED_COLOR);
