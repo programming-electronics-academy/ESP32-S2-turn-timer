@@ -53,7 +53,7 @@ const int END_HUE = 255;                        //Red
 const int HUE_INCREMENT = END_HUE - START_HUE;  // Used to change color based on selected turn time
 
 // Timing settings
-const unsigned long HOLD_TO_FINISH_INTERVAL = 2 * 1000;  // How long to hold button when making final selection for time
+const unsigned long HOLD_TO_FINISH_INTERVAL = 500;  // How long to hold button when making final selection for time
 long turnTime = 0;                                       // Manages the turnTime - determined in setup(), used in loop()
 
 // Flag set in ISR to indicate a button press
@@ -200,7 +200,6 @@ int selectTime(CHSV uncountedColor, CHSV countedColor) {
       FastLED.show();
       update = false;
     }
-
 
     // Check if button held
     if (!digitalRead(ROTARY_ENC_SWITCH)) {
