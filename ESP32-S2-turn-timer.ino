@@ -1,16 +1,4 @@
 /**
-   TODO
-
-    -Change selection of time from button to Rotary Encoder
-      - Import RE code
-        - adjust ISR for ESP32 -> ICACHE_RAM_ATTR
-
-   DONE
-     -Test RE code
-     -Test FAST LED code
-
-     -Import exisiting Turn Timer code
-      -Change Pin Numbers
 
 */
 
@@ -18,7 +6,6 @@
 #include <FastLED.h>
 
 //pins
-//const byte BUTTON_PIN = 21; //Delete when moved to RE input
 const byte DATA_PIN = 11; // neo-pixel data pin
 const unsigned int ROTARY_ENC_PIN_A = 33;
 const unsigned int ROTARY_ENC_PIN_B = 34;
@@ -60,12 +47,8 @@ long turnTime = 0;                                       // Manages the turnTime
 volatile boolean buttonPressed = false;
 
 
-
-
 /************************************************************
-   ISR: Actions to take on button press
-
-   DELETE when input goes to RE
+   ISR: Action to take on Rotary Endcode switch press
  ***********************************************************/
 void buttonPress() {
   buttonPressed = true;  //flag that button was pressed
@@ -167,7 +150,7 @@ int selectTime(CHSV uncountedColor, CHSV countedColor) {
   int tempCount = 0;                       // This tracks the button presses, each button press is a time unit
   unsigned long previousButtonHoldTime = 0;  // Used for determining long button hold time
   boolean update = true;
-
+ 
   while (true) {
 
     // Get current position from rotary encoder
@@ -204,17 +187,11 @@ int selectTime(CHSV uncountedColor, CHSV countedColor) {
     // Check if button held
     if (!digitalRead(ROTARY_ENC_SWITCH)) {
 
-      // Exit while if button has been held "long" time
-      if (millis() - previousButtonHoldTime > HOLD_TO_FINISH_INTERVAL) {
+      signalTimeSelected(countedColor);  //Display cylon effect to show selection has been made
+      buttonPressed = false;             // reset ISR button flag
+      count = 0;                         // Reset count
+      break;
 
-        signalTimeSelected(countedColor);  //Display cylon effect to show selection has been made
-        buttonPressed = false;             // reset ISR button flag
-        count = 0;                         // Reset count
-        break;
-      }
-
-    } else {
-      previousButtonHoldTime = millis();
     }
   }
 
@@ -286,3 +263,22 @@ void loop() {
     }
   }
 }  // End loop()
+
+
+/*
+  // Check if button held
+    if (!digitalRead(ROTARY_ENC_SWITCH)) {
+
+      // Exit while if button has been held "long" time
+      if (millis() - previousButtonHoldTime > HOLD_TO_FINISH_INTERVAL) {
+
+        signalTimeSelected(countedColor);  //Display cylon effect to show selection has been made
+        buttonPressed = false;             // reset ISR button flag
+        count = 0;                         // Reset count
+        break;
+      }
+
+    } else {
+      previousButtonHoldTime = millis();
+    }
+*/
