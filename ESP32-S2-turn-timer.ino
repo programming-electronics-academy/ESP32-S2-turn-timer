@@ -223,45 +223,55 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(ROTARY_ENC_PIN_A), readEncoderStatus, CHANGE);
   attachInterrupt(digitalPinToInterrupt(ROTARY_ENC_PIN_B), readEncoderStatus, CHANGE);
 
-//  // Set turn time.  Select seconds, then minutes.
-//  long secondsCount = selectTime(UNCOUNTED_COLOR, SECONDS_COUNTED_COLOR);
-//  long minutesCount = selectTime(UNCOUNTED_COLOR, MINUTES_COUNTED_COLOR);
-//
-//  turnTime = computeTurnTime(secondsCount, minutesCount);
+  //  // Set turn time.  Select seconds, then minutes.
+  //  long secondsCount = selectTime(UNCOUNTED_COLOR, SECONDS_COUNTED_COLOR);
+  //  long minutesCount = selectTime(UNCOUNTED_COLOR, MINUTES_COUNTED_COLOR);
+  //
+  //  turnTime = computeTurnTime(secondsCount, minutesCount);
 }
 
 void loop() {
 
   static bool updateTime = true;
+  static unsigned long timerIncrement = 0;
+  static unsigned long previousMillis = 0;
+  unsigned long currentMillis = millis();
+  static int hue = START_HUE;
+
 
   // Set turn time.  Select seconds, then minutes.
   if (updateTime) {
 
     long secondsCount = selectTime(UNCOUNTED_COLOR, SECONDS_COUNTED_COLOR);
     long minutesCount = selectTime(UNCOUNTED_COLOR, MINUTES_COUNTED_COLOR);
-    turnTime = computeTurnTime(secondsCount, minutesCount);
-    
+
+    turnTime = computeTurnTime(secondsCount, minutesCount); // get total turn time
+    timerIncrement = turnTime / HUE_INCREMENT; // How much time to wait between each hue change
+
+    hue = START_HUE;
     updateTime = false;
   }
 
   boolean overTime = false;
 
   // As turn time elapses, show a fade from Green to Blue to Red
-  for (int hue = START_HUE; hue <= END_HUE; hue++) {
+  if (currentMillis - previousMillis > timerIncrement) {
+    previousMillis = currentMillis;
     changeAllColorTo(hue);
     FastLED.show();
-    delay(turnTime / HUE_INCREMENT);
+    hue++;
+  }
 
-    // If button flag was set in ISR then exit
-    if (buttonPressed) {
-      buttonPressed = false;  // Reset button flag
-      break;
-    }
+  // If button is short pressed, reset current timer
+  if (buttonPressed) {
+    hue = START_HUE;
+    buttonPressed = false;  // Reset button flag
+  }
 
-    // If button is not pressed before turn ends, LEDs go into "overtime" mode
-    if (hue == END_HUE) {
-      overTime = true;
-    }
+  // If hue increment all the way to end, LEDs go into "overtime" mode
+  if (hue == END_HUE) {
+    hue = START_HUE;
+    overTime = true;
   }
 
   // Over Time Mode, All LEDs blink
