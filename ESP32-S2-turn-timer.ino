@@ -1,5 +1,6 @@
 /**
 
+      If button held -> set flag to set time
 */
 
 
@@ -40,8 +41,9 @@ const int END_HUE = 255;                        //Red
 const int HUE_INCREMENT = END_HUE - START_HUE;  // Used to change color based on selected turn time
 
 // Timing settings
+long turnTime = 0;                                  // Manages the turnTime - determined in setup(), used in loop()
 const unsigned long HOLD_TO_FINISH_INTERVAL = 500;  // How long to hold button when making final selection for time
-long turnTime = 0;                                       // Manages the turnTime - determined in setup(), used in loop()
+unsigned long previousButtonHoldTime = 0;           // Used for determining long button hold time
 
 // Flag set in ISR to indicate a button press
 volatile boolean buttonPressed = false;
@@ -148,9 +150,8 @@ void signalTimeSelected(CHSV color) {
 int selectTime(CHSV uncountedColor, CHSV countedColor) {
 
   int tempCount = 0;                       // This tracks the button presses, each button press is a time unit
-  unsigned long previousButtonHoldTime = 0;  // Used for determining long button hold time
   boolean update = true;
- 
+
   while (true) {
 
     // Get current position from rotary encoder
@@ -222,14 +223,26 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(ROTARY_ENC_PIN_A), readEncoderStatus, CHANGE);
   attachInterrupt(digitalPinToInterrupt(ROTARY_ENC_PIN_B), readEncoderStatus, CHANGE);
 
-  // Set turn time.  Select seconds, then minutes.
-  long secondsCount = selectTime(UNCOUNTED_COLOR, SECONDS_COUNTED_COLOR);
-  long minutesCount = selectTime(UNCOUNTED_COLOR, MINUTES_COUNTED_COLOR);
-
-  turnTime = computeTurnTime(secondsCount, minutesCount);
+//  // Set turn time.  Select seconds, then minutes.
+//  long secondsCount = selectTime(UNCOUNTED_COLOR, SECONDS_COUNTED_COLOR);
+//  long minutesCount = selectTime(UNCOUNTED_COLOR, MINUTES_COUNTED_COLOR);
+//
+//  turnTime = computeTurnTime(secondsCount, minutesCount);
 }
 
 void loop() {
+
+  static bool updateTime = true;
+
+  // Set turn time.  Select seconds, then minutes.
+  if (updateTime) {
+
+    long secondsCount = selectTime(UNCOUNTED_COLOR, SECONDS_COUNTED_COLOR);
+    long minutesCount = selectTime(UNCOUNTED_COLOR, MINUTES_COUNTED_COLOR);
+    turnTime = computeTurnTime(secondsCount, minutesCount);
+    
+    updateTime = false;
+  }
 
   boolean overTime = false;
 
