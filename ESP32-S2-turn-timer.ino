@@ -249,14 +249,6 @@ void loop() {
     updateTime = false;
   }
 
-  // As turn time elapses, show a fade from Green to Blue to Red
-  if (currentMillisTimer - previousMillisTimer > timerIncrement) {
-    previousMillisTimer = currentMillisTimer;
-    changeAllColorTo(hue);
-    FastLED.show();
-    hue++;
-  }
-
   // If long button press, set flag for new turn time
   unsigned long startPressButton = millis();
 
@@ -274,6 +266,14 @@ void loop() {
     buttonPressed = false;  // Reset button flag
   }
 
+  // As turn time elapses, show a fade from Green to Blue to Red
+  if (currentMillisTimer - previousMillisTimer > timerIncrement) {
+    previousMillisTimer = currentMillisTimer;
+    changeAllColorTo(hue);
+    FastLED.show();
+    hue++;
+  }
+  
   // If hue increment all the way to end, LEDs go into "overtime" mode
   if (hue == END_HUE) {
     hue = START_HUE;
