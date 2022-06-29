@@ -285,8 +285,8 @@ void loop() {
 
     blinkRed();
 
-    // If button flag was set in ISR then exit
-    if (buttonPressed) {
+    // If button flag was set in ISR, or Long button hold, then exit
+    if(!digitalRead(ROTARY_ENC_SWITCH) || buttonPressed){
       buttonPressed = false;
       break;
     }
