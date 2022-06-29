@@ -174,14 +174,31 @@ int selectTime(CHSV uncountedColor, CHSV countedColor) {
       update = true;
     }
 
+    /*******************************************************
+        NORMAL LED INSTALLATION
+     ********************************************************/
+    //    if (update) {
+    //      // Set color of each LED based on counted or uncounted
+    //      for (int i = 0; i < NUM_LEDS; i++) {
+    //        leds[i] = i < tempCount
+    //                  ? countedColor
+    //                  : uncountedColor;
+    //      }
+    //      FastLED.show();
+    //      update = false;
+    //    }
+
+    /*******************************************************
+      KAPPER LED INSTALLATION
+    ********************************************************/
     if (update) {
       // Set color of each LED based on counted or uncounted
-      for (int i = 0; i < NUM_LEDS; i++) {
+
+      for (int i = NUM_LEDS - 1; i >= 0; i--) { // Reverse LED direction
         leds[i] = i < tempCount
                   ? countedColor
                   : uncountedColor;
       }
-
       FastLED.show();
       update = false;
     }
