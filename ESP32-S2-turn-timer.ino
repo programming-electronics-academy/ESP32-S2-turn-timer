@@ -34,6 +34,7 @@ const CHSV UNCOUNTED_COLOR = CHSV(0, 255, 255);          //Red
 const CHSV SECONDS_COUNTED_COLOR = CHSV(160, 255, 255);  //Blue
 const CHSV MINUTES_COUNTED_COLOR = CHSV(96, 255, 255);   // Green
 const CHSV HOURS_COUNTED_COLOR = CHSV(64, 255, 255);     // Yellow
+const CHSV RESET_COLOR = CHSV(213, 255, 255);     // Purple
 
 // Colors / "Hue" used durring each turn (0-255)
 const int START_HUE = 85;                       //Green(ish) MUST be a number < END_HUE
@@ -223,21 +224,17 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(ROTARY_ENC_PIN_A), readEncoderStatus, CHANGE);
   attachInterrupt(digitalPinToInterrupt(ROTARY_ENC_PIN_B), readEncoderStatus, CHANGE);
 
-  //  // Set turn time.  Select seconds, then minutes.
-  //  long secondsCount = selectTime(UNCOUNTED_COLOR, SECONDS_COUNTED_COLOR);
-  //  long minutesCount = selectTime(UNCOUNTED_COLOR, MINUTES_COUNTED_COLOR);
-  //
-  //  turnTime = computeTurnTime(secondsCount, minutesCount);
 }
 
 void loop() {
 
   static bool updateTime = true;
   static unsigned long timerIncrement = 0;
-  static unsigned long previousMillis = 0;
-  unsigned long currentMillis = millis();
-  static int hue = START_HUE;
+  static unsigned long previousMillisTimer = 0;
+  unsigned long currentMillisTimer = millis();
 
+  static int hue = START_HUE;
+  boolean overTime = false;
 
   // Set turn time.  Select seconds, then minutes.
   if (updateTime) {
@@ -252,17 +249,26 @@ void loop() {
     updateTime = false;
   }
 
-  boolean overTime = false;
-
   // As turn time elapses, show a fade from Green to Blue to Red
-  if (currentMillis - previousMillis > timerIncrement) {
-    previousMillis = currentMillis;
+  if (currentMillisTimer - previousMillisTimer > timerIncrement) {
+    previousMillisTimer = currentMillisTimer;
     changeAllColorTo(hue);
     FastLED.show();
     hue++;
   }
 
-  // If button is short pressed, reset current timer
+  // If long button press, set flag for new turn time
+  unsigned long startPressButton = millis();
+
+  while (!digitalRead(ROTARY_ENC_SWITCH)) {
+    unsigned long currentPressButton = millis();
+    if (currentPressButton - startPressButton > HOLD_TO_FINISH_INTERVAL) {
+      updateTime = true;
+      signalTimeSelected(RESET_COLOR);  //Display cylon effect to show selection has been made
+    }
+  }
+
+  // If short button press, reset hue
   if (buttonPressed) {
     hue = START_HUE;
     buttonPressed = false;  // Reset button flag
@@ -286,22 +292,3 @@ void loop() {
     }
   }
 }  // End loop()
-
-
-/*
-  // Check if button held
-    if (!digitalRead(ROTARY_ENC_SWITCH)) {
-
-      // Exit while if button has been held "long" time
-      if (millis() - previousButtonHoldTime > HOLD_TO_FINISH_INTERVAL) {
-
-        signalTimeSelected(countedColor);  //Display cylon effect to show selection has been made
-        buttonPressed = false;             // reset ISR button flag
-        count = 0;                         // Reset count
-        break;
-      }
-
-    } else {
-      previousButtonHoldTime = millis();
-    }
-*/
