@@ -1,9 +1,3 @@
-/**
-
-      If button held -> set flag to set time
-*/
-
-
 #include <FastLED.h>
 
 //pins
@@ -159,7 +153,6 @@ int selectTime(CHSV uncountedColor, CHSV countedColor) {
     if (encoderStatus != NO_CHANGE) {
 
       //Constrain count from 0-NUM_LEDs
-      //Note: -> //constrain(count, 0, NUM_LEDS); is not working...
       if (count > NUM_LEDS) {
         count = NUM_LEDS;
       } else if (count < 0) {
