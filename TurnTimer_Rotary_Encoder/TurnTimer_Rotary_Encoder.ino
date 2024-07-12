@@ -1,19 +1,19 @@
 #include <FastLED.h>
 
 //pins
-const byte DATA_PIN = 11; // neo-pixel data pin
-const unsigned int ROTARY_ENC_PIN_A = 33;
-const unsigned int ROTARY_ENC_PIN_B = 34;
-const unsigned int ROTARY_ENC_SWITCH = 21;
+const byte DATA_PIN = 13;  // neo-pixel data pin
+const unsigned int ROTARY_ENC_PIN_A = 25;
+const unsigned int ROTARY_ENC_PIN_B = 26;
+const unsigned int ROTARY_ENC_SWITCH = 14;
 
 //Rotary Encoder States
 #define NO_CHANGE 0
-#define TURN_CW   1
-#define TURN_CCW  2
+#define TURN_CW 1
+#define TURN_CCW 2
 
 //Direction     ┌─  ccw  ─┐  N  ┌─  cw  ─┐
 //position       0  1  2  3  4  5  6  7  8
-byte aState[] = {3, 2, 0, 1, 3, 2, 0, 1, 3};
+byte aState[] = { 3, 2, 0, 1, 3, 2, 0, 1, 3 };
 byte lastState = 3;
 volatile int count = 0;
 unsigned int position = 4;
@@ -28,7 +28,7 @@ const CHSV UNCOUNTED_COLOR = CHSV(0, 255, 255);          //Red
 const CHSV SECONDS_COUNTED_COLOR = CHSV(160, 255, 255);  //Blue
 const CHSV MINUTES_COUNTED_COLOR = CHSV(96, 255, 255);   // Green
 const CHSV HOURS_COUNTED_COLOR = CHSV(64, 255, 255);     // Yellow
-const CHSV RESET_COLOR = CHSV(213, 255, 255);     // Purple
+const CHSV RESET_COLOR = CHSV(213, 255, 255);            // Purple
 
 // Colors / "Hue" used durring each turn (0-255)
 const int START_HUE = 85;                       //Green(ish) MUST be a number < END_HUE
@@ -54,7 +54,7 @@ void buttonPress() {
 /************************************************************
    ISR: Get rotary encoder position
  ***********************************************************/
-void ICACHE_RAM_ATTR readEncoderStatus() {
+void IRAM_ATTR readEncoderStatus() {
   byte A_Output = digitalRead(ROTARY_ENC_PIN_A);
   byte B_Output = digitalRead(ROTARY_ENC_PIN_B);
   byte currState = (A_Output * 2) + B_Output;
@@ -69,8 +69,7 @@ void ICACHE_RAM_ATTR readEncoderStatus() {
         position = 4;
         encoderStatus = TURN_CW;
       }
-    }
-    else if (currState == aState[position - 1]) {
+    } else if (currState == aState[position - 1]) {
       position--;
       //Serial.println(position);
       if (position == 0) {
@@ -144,7 +143,7 @@ void signalTimeSelected(CHSV color) {
  ***********************************************************/
 int selectTime(CHSV uncountedColor, CHSV countedColor) {
 
-  int tempCount = 0;                       // This tracks the button presses, each button press is a time unit
+  int tempCount = 0;  // This tracks the button presses, each button press is a time unit
   boolean update = true;
 
   while (true) {
@@ -171,9 +170,9 @@ int selectTime(CHSV uncountedColor, CHSV countedColor) {
       // Set color of each LED based on counted or uncounted
       for (int i = 0; i < NUM_LEDS; i++) {
         //leds[NUM_LEDS - 1 - i] = i < tempCount  // Comment next line and uncomment this line for reverse LED installation
-        leds[i] = i < tempCount                 
-                  ? countedColor
-                  : uncountedColor;
+        leds[i] = i < tempCount
+                    ? countedColor
+                    : uncountedColor;
       }
       FastLED.show();
       update = false;
@@ -186,7 +185,6 @@ int selectTime(CHSV uncountedColor, CHSV countedColor) {
       buttonPressed = false;             // reset ISR button flag
       count = 0;                         // Reset count
       break;
-
     }
   }
 
@@ -199,7 +197,7 @@ int selectTime(CHSV uncountedColor, CHSV countedColor) {
  ***********************************************************/
 long computeTurnTime(long s = 0, long m = 0) {
 
-  s = s * 5 * 1000;  // 5 seconds for every count
+  s = s * 5 * 1000;   // 5 seconds for every count
   m = m * 60 * 1000;  // 1 minute for every count
 
   return s + m;  // in milliseconds
@@ -212,11 +210,12 @@ void setup() {
   FastLED.setBrightness(84);
 
   pinMode(ROTARY_ENC_SWITCH, INPUT_PULLUP);
+  pinMode(ROTARY_ENC_PIN_A, INPUT_PULLUP);
+  pinMode(ROTARY_ENC_PIN_B, INPUT_PULLUP);
 
   attachInterrupt(digitalPinToInterrupt(ROTARY_ENC_SWITCH), buttonPress, RISING);
   attachInterrupt(digitalPinToInterrupt(ROTARY_ENC_PIN_A), readEncoderStatus, CHANGE);
   attachInterrupt(digitalPinToInterrupt(ROTARY_ENC_PIN_B), readEncoderStatus, CHANGE);
-
 }
 
 void loop() {
@@ -235,8 +234,8 @@ void loop() {
     long secondsCount = selectTime(UNCOUNTED_COLOR, SECONDS_COUNTED_COLOR);
     long minutesCount = selectTime(UNCOUNTED_COLOR, MINUTES_COUNTED_COLOR);
 
-    turnTime = computeTurnTime(secondsCount, minutesCount); // get total turn time
-    timerIncrement = turnTime / HUE_INCREMENT; // How much time to wait between each hue change
+    turnTime = computeTurnTime(secondsCount, minutesCount);  // get total turn time
+    timerIncrement = turnTime / HUE_INCREMENT;               // How much time to wait between each hue change
 
     hue = START_HUE;
     updateTime = false;
@@ -266,7 +265,7 @@ void loop() {
     FastLED.show();
     hue++;
   }
-  
+
   // If hue increment all the way to end, LEDs go into "overtime" mode
   if (hue == END_HUE) {
     hue = START_HUE;
@@ -279,7 +278,7 @@ void loop() {
     blinkRed();
 
     // If button flag was set in ISR, or Long button hold, then exit
-    if(!digitalRead(ROTARY_ENC_SWITCH) || buttonPressed){
+    if (!digitalRead(ROTARY_ENC_SWITCH) || buttonPressed) {
       buttonPressed = false;
       break;
     }
